@@ -1,4 +1,4 @@
--module(advent).
+-module(aoc).
 
 -on_load(init/0).
 
@@ -16,10 +16,10 @@ run() ->
 
 run(X) when X == example; X == input ->
 	run(persistent_term:get({?MODULE,X}));
-run(X) when is_list(X) ->
+run([I|R]) ->
 	element(1, lists:foldl(fun
 		(XX, {A,L}) when XX > L ->
 			{A+1,XX};
 		(XX, {A,_L}) ->
 			{A,XX}
-	end, {0,hd(X)}, tl(X))).
+	end, {0,I}, R).
