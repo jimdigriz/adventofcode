@@ -1,3 +1,5 @@
+%%% https://adventofcode.com/2021/day/1
+
 -module(aoc).
 
 -on_load(init/0).
@@ -14,25 +16,22 @@ init() ->
 
 part1() ->
 	part1(example).
-
 part1(example) ->
-	7 = run(persistent_term:get({?MODULE,example}));
+	7 = run(example);
 part1(input) ->
-	run(persistent_term:get({?MODULE,input})).
+	run(input).
 
 part2() ->
 	part2(example).
-
 part2(example) ->
-	5 = run(persistent_term:get({?MODULE,example}), 3);
+	5 = run(example, 3);
 part2(input) ->
-	run(persistent_term:get({?MODULE,input}), 3).
+	run(input, 3).
 
-run(L) ->
-	run(L, 1).
-
-run(L, W) ->
-	run(L, W, []).
+run(V) ->
+	run(V, 1).
+run(V, W) ->
+	run(persistent_term:get({?MODULE,V}), W, []).
 
 run(L = [_X|R], W, A) when length(L) >= W ->
 	AN = lists:sum(element(1, lists:split(W, L))),
