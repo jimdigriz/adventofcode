@@ -1,1 +1,1 @@
-https://adventofcode.com/ solutions...in Erlang because thats how I roll.
+https://adventofcode.com/ solutions...in Erlang because that's how I roll.
