@@ -1,4 +1,4 @@
--module(day01).
+-module(code).
 
 -on_load(init/0).
 
