@@ -1,4 +1,4 @@
--module(code).
+-module(advent).
 
 -on_load(init/0).
 
