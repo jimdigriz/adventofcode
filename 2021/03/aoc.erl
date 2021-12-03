@@ -5,6 +5,7 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
+-export([part2/0, part2/1]).
 
 init() ->
 	lists:foreach(fun({K,F}) ->
@@ -16,24 +17,67 @@ init() ->
 part1() ->
 	part1(example).
 part1(example) ->
-	GE = {G = 22,E = 9} = run(example),
+	GE = {G = 22,E = 9} = run1(example),
 	{GE,G*E};
 part1(input) ->
-	GE = {G,E} = run(input),
+	GE = {G,E} = run1(input),
 	{GE,G*E}.
 
-run(V) ->
+part2() ->
+	part2(example).
+part2(example) ->
+	OC = {O = 23,C = 10} = run2(example),
+	{OC,O*C};
+part2(input) ->
+	OC = {O,C} = run2(input),
+	{OC,O*C}.
+
+run1(V) ->
 	L0 = persistent_term:get({?MODULE,V}),
 	L = lists:map(fun binary_to_list/1, L0),
 	A = [ 0 || _ <- lists:seq(1, length(hd(L))) ],
-	run(L, A, 0).
-run([H|R], A0, C) ->
+	run12(L, A, 0).
+run12([H|R], A0, C) ->
 	A = lists:map(fun({X,Y}) -> (X-$0) + Y end, lists:zip(H, A0)),
-	run(R, A, C + 1);
-run([], A, C) ->
+	run12(R, A, C + 1);
+run12([], A, C) ->
 	erlang:delete_element(3, lists:foldr(fun
 		(X, {G,E,S}) when X > (C div 2) ->
 			{G+S,E,2*S};
 		(_X, {G,E,S}) ->
 			{G,E+S,2*S}
 	end, {0,0,1}, A)).
+
+run2(V) ->
+	L0 = persistent_term:get({?MODULE,V}),
+	L = lists:map(fun binary_to_list/1, L0),
+	{run22O({L,L}),run22C({L,L})}.
+run22O({L0 = [_,_|_],LL0}) ->
+	{A,C} = lists:foldl(fun([X|_], {A,C}) ->
+		{A+X-$0,C+1}
+	end, {0,0}, LL0),
+	V = if A > (C/2) -> $1; A == (C/2) -> $1; true -> $0 end,
+	run22O(lists:unzip(lists:filtermap(fun
+		({X,Y}) when hd(Y) == V ->
+			{true,{X,tl(Y)}};
+		({_X,_Y}) ->
+			false
+	end, lists:zip(L0,LL0))));
+run22O({_L0 = [V],_LL}) ->
+	bits2int(V).
+run22C({L0 = [_,_|_],LL0}) ->
+	{A,C} = lists:foldl(fun([X|_], {A,C}) ->
+		{A+X-$0,C+1}
+	end, {0,0}, LL0),
+	V = if A > (C/2) -> $0; A == (C/2) -> $0; true -> $1 end,
+	run22C(lists:unzip(lists:filtermap(fun
+		({X,Y}) when hd(Y) == V ->
+			{true,{X,tl(Y)}};
+		({_X,_Y}) ->
+			false
+	end, lists:zip(L0,LL0))));
+run22C({_L0 = [V],_LL}) ->
+	bits2int(V).
+
+bits2int(V) ->
+	element(1, lists:foldr(fun (X,{A,S}) -> {A+((X-$0)*S),2*S} end, {0,1}, V)).
