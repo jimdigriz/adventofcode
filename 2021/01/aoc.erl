@@ -10,7 +10,7 @@
 init() ->
 	lists:foreach(fun({K,F}) ->
 		{ok,B} = file:read_file(atom_to_list(?MODULE) ++ "." ++ F),
-		L = lists:map(fun binary_to_integer/1, binary:split(B, <<"\n">>, [global,trim_all])),
+		L = binary:split(B, <<"\n">>, [global,trim_all]),
 		persistent_term:put({?MODULE,K}, L)
 	end, [{example,"input.example"},{input,"input"}]).
 
@@ -31,7 +31,8 @@ part2(input) ->
 run(V) ->
 	run(V, 1).
 run(V, W) ->
-	L = persistent_term:get({?MODULE,V}),
+	L0 = persistent_term:get({?MODULE,V}),
+	L = lists:map(fun binary_to_integer/1, L0),
 	{H,T} = lists:split(W, L),
 	run(H, T, []).
 run(H = [_HH|HR], _T = [TH|TR], A) ->
