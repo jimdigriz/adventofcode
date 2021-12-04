@@ -51,17 +51,12 @@ run12([], A, C) ->
 run2(V) ->
 	L0 = persistent_term:get({?MODULE,V}),
 	L = lists:map(fun binary_to_list/1, L0),
-	{run22({L,L}, o2),run22({L,L}, co2)}.
-run22({L0 = [_,_|_],LL0}, M) ->
+	{run22({L,L}, {$1,$0}),run22({L,L}, {$0,$1})}.
+run22({L0 = [_,_|_],LL0}, M = {M1,M2}) ->
 	{A,C} = lists:foldl(fun([X|_], {A,C}) ->
 		{A+X-$0,C+1}
 	end, {0,0}, LL0),
-	V = if
-		M == o2 ->
-			if A > (C/2) -> $1; A == (C/2) -> $1; true -> $0 end;
-		true ->
-			if A > (C/2) -> $0; A == (C/2) -> $0; true -> $1 end
-	end,
+	V = if A > (C/2); A == (C/2) -> M1; true -> M2 end,
 	run22(lists:unzip(lists:filtermap(fun
 		({X,Y}) when hd(Y) == V ->
 			{true,{X,tl(Y)}};
