@@ -10,7 +10,7 @@
 init() ->
 	lists:foreach(fun({K,F}) ->
 		{ok,B} = file:read_file(atom_to_list(?MODULE) ++ "." ++ F),
-		L = binary:split(B, <<"\n">>, [global,trim_all]),
+		L = binary:split(B, <<"\n">>, [global,trim]),
 		persistent_term:put({?MODULE,K}, L)
 	end, [{example,"input.example"},{input,"input"}]).
 
