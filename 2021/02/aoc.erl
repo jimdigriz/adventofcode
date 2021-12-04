@@ -7,6 +7,8 @@
 -export([part1/0, part1/1]).
 -export([part2/0, part2/1]).
 
+%-compile(export_all).
+
 init() ->
 	lists:foreach(fun({K,F}) ->
 		{ok,B} = file:read_file(atom_to_list(?MODULE) ++ "." ++ F),
