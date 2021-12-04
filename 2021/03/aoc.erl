@@ -51,33 +51,22 @@ run12([], A, C) ->
 run2(V) ->
 	L0 = persistent_term:get({?MODULE,V}),
 	L = lists:map(fun binary_to_list/1, L0),
-	{run22O({L,L}),run22C({L,L})}.
-run22O({L0 = [_,_|_],LL0}) ->
+	{run22({L,L}, o2),run22({L,L}, co2)}.
+run22({L0 = [_,_|_],LL0}, M) ->
 	{A,C} = lists:foldl(fun([X|_], {A,C}) ->
 		{A+X-$0,C+1}
 	end, {0,0}, LL0),
-	V = if A > (C/2) -> $1; A == (C/2) -> $1; true -> $0 end,
-	run22O(lists:unzip(lists:filtermap(fun
+	V = if
+		M == o2 ->
+			if A > (C/2) -> $1; A == (C/2) -> $1; true -> $0 end;
+		true ->
+			if A > (C/2) -> $0; A == (C/2) -> $0; true -> $1 end
+	end,
+	run22(lists:unzip(lists:filtermap(fun
 		({X,Y}) when hd(Y) == V ->
 			{true,{X,tl(Y)}};
 		({_X,_Y}) ->
 			false
-	end, lists:zip(L0,LL0))));
-run22O({_L0 = [V],_LL}) ->
-	bits2int(V).
-run22C({L0 = [_,_|_],LL0}) ->
-	{A,C} = lists:foldl(fun([X|_], {A,C}) ->
-		{A+X-$0,C+1}
-	end, {0,0}, LL0),
-	V = if A > (C/2) -> $0; A == (C/2) -> $0; true -> $1 end,
-	run22C(lists:unzip(lists:filtermap(fun
-		({X,Y}) when hd(Y) == V ->
-			{true,{X,tl(Y)}};
-		({_X,_Y}) ->
-			false
-	end, lists:zip(L0,LL0))));
-run22C({_L0 = [V],_LL}) ->
-	bits2int(V).
-
-bits2int(V) ->
+	end, lists:zip(L0,LL0))), M);
+run22({_L0 = [V],_LL}, _M) ->
 	element(1, lists:foldr(fun (X,{A,S}) -> {A+((X-$0)*S),2*S} end, {0,1}, V)).
