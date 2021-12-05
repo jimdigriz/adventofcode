@@ -5,8 +5,9 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
+%-export([part2/0, part2/1]).
 
-%-compile(export_all).
+-compile(export_all).
 
 init() ->
 	lists:foreach(fun({K,F}) ->
@@ -33,6 +34,13 @@ part1(example) ->
 part1(input) ->
 	run1(input).
 
+part2() ->
+	part2(example).
+part2(example) ->
+	12 = run2(example);
+part2(input) ->
+	run2(input).
+
 run1(V) ->
 	L = persistent_term:get({?MODULE,V}),
 	run1(L, dict:new()).
@@ -53,4 +61,19 @@ run1([{{X1,Y1},{X2,Y2}}|L], D0) when Y1 == Y2 ->
 run1([{{_X1,_Y1},{_X2,_Y2}}|L], D) ->
 	run1(L, D);
 run1([], D) ->
+	dict:size(dict:filter(fun(_K, V) -> V > 1 end, D)).
+
+run2(V) ->
+	L = persistent_term:get({?MODULE,V}),
+	run2(L, dict:new()).
+run2([{{X1,Y1},{X2,Y2}}|L], D0) ->
+	XL0 = lists:seq(X1, X2, if X1 < X2 -> 1; true -> -1 end),
+	YL0 = lists:seq(Y1, Y2, if Y1 < Y2 -> 1; true -> -1 end),
+	XL = if X1 == X2 -> [X1 || _ <- YL0]; true -> XL0 end,
+	YL = if Y1 == Y2 -> [Y1 || _ <- XL0]; true -> YL0 end,
+	D = lists:foldl(fun({X,Y}, DD) ->
+		dict:update_counter({X,Y}, 1, DD)
+	end, D0, lists:zip(XL,YL)),
+	run2(L, D);
+run2([], D) ->
 	dict:size(dict:filter(fun(_K, V) -> V > 1 end, D)).
