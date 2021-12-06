@@ -5,8 +5,9 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
+-export([part2/0, part2/1]).
 
-%-compile(export_all).
+-compile(export_all).
 
 init() ->
 	lists:foreach(fun({K,F}) ->
@@ -22,20 +23,34 @@ to_list_of_ints(B) ->
 part1() ->
 	part1(example).
 part1(example) ->
-	5934 = run1(example);
+	5934 = run(example, 80);
 part1(input) ->
-	run1(input).
+	run(input, 80).
 
-run1(V) ->
+part2() ->
+	part2(example).
+part2(example) ->
+	26984457539 = run(example, 256);
+part2(input) ->
+	run(input, 256).
+
+run(V, C) ->
 	L = persistent_term:get({?MODULE,V}),
-	run1(L, 80).
-run1(L, 0) ->
-	length(L);
-run1(L0, C) ->
-	L = lists:foldl(fun
-		(0, A) ->
-			[6,8|A];
-		(I, A) ->
-			[I-1|A]
-	end, [], L0),
-	run1(L, C - 1).
+	A = lists:foldl(fun(X, AA) ->
+		array:set(X, array:get(X, AA) + 1, AA)
+	end, empty(), L),
+	run2(A, C).
+run2(A, 0) ->
+	array:foldl(fun(_I, V, AA) -> AA + V end, 0, A);
+run2(A0, C) ->
+	A = array:foldl(fun
+		(I, V, AA0) when I == 0 ->
+			array:set(6, V, array:set(8, V, AA0));
+		(I, V, AA0) ->
+			P = (I + 8) rem 9,
+			array:set(P, array:get(P, AA0) + V, AA0)
+	end, empty(), A0),
+	run2(A, C - 1).
+
+empty() ->
+	array:new(9, {default,0}).
