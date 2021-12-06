@@ -48,8 +48,8 @@ part2(input) ->
 	SN = {S,N} = run2(input),
 	{SN,S*N}.
 
-to_board_sets(B) ->
-	lists:map(fun sets:from_list/1, B ++ board_rotate(B)).
+to_board_ordsets(B) ->
+	lists:map(fun ordsets:from_list/1, B ++ board_rotate(B)).
 
 board_rotate(B) ->
 	board_rotate(B, []).
@@ -62,38 +62,38 @@ board_rotate(B0, BF0) ->
 	board_rotate(B, [BF|BF0]).
 
 board_match({_A,S}, NS) ->
-	lists:any(fun(SS) -> sets:is_subset(SS, NS) end, S).
+	lists:any(fun(SS) -> ordsets:is_subset(SS, NS) end, S).
 
 run_common(V) ->
 	N = persistent_term:get({?MODULE,V,numbers}),
 	B0 = persistent_term:get({?MODULE,V,boards}),
 	B = lists:map(fun(BB) ->
-		A = sets:from_list(lists:flatten(BB)),
-		S = to_board_sets(BB),
+		A = ordsets:from_list(lists:flatten(BB)),
+		S = to_board_ordsets(BB),
 		{A,S}
 	end, B0),
 	{B,N}.
 
 run1(V) ->
 	{B,N} = run_common(V),
-	run1(B, sets:new(), N).
+	run1(B, ordsets:new(), N).
 run1(B, NS0, [X|NR]) ->
-	NS = sets:add_element(X, NS0),
+	NS = ordsets:add_element(X, NS0),
 	case lists:search(fun(BB) -> board_match(BB, NS) end, B) of
 		{value,{A,_S}} ->
-			{lists:sum(sets:to_list(sets:subtract(A, NS))),X};
+			{lists:sum(ordsets:to_list(ordsets:subtract(A, NS))),X};
 		false ->
 			run1(B, NS, NR)
 	end.
 
 run2(V) ->
 	{B,N} = run_common(V),
-	run2(B, sets:new(), N).
+	run2(B, ordsets:new(), N).
 run2(B0 = [{A0,_S0}|_], NS0, [X|NR]) ->
-	NS = sets:add_element(X, NS0),
+	NS = ordsets:add_element(X, NS0),
 	case lists:filter(fun(BB) -> not board_match(BB, NS) end, B0) of
 		[] ->
-			{lists:sum(sets:to_list(sets:subtract(A0, NS))),X};
+			{lists:sum(ordsets:to_list(ordsets:subtract(A0, NS))),X};
 		B ->
 			run2(B, NS, NR)
 	end.
