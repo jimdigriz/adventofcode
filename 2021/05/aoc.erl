@@ -5,9 +5,9 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
-%-export([part2/0, part2/1]).
+-export([part2/0, part2/1]).
 
--compile(export_all).
+%-compile(export_all).
 
 init() ->
 	lists:foreach(fun({K,F}) ->
