@@ -5,6 +5,7 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
+-export([part2/0, part2/1]).
 
 %-compile(export_all).
 
@@ -32,6 +33,13 @@ part1(example) ->
 part1(input) ->
 	run1(input).
 
+part2() ->
+	part2(example).
+part2(example) ->
+	{61229,_A} = run2(example);
+part2(input) ->
+	run2(input).
+
 run1(V) ->
 	L = persistent_term:get({?MODULE,V}),
 	lists:foldl(fun({_U,N}, A) ->
@@ -42,3 +50,48 @@ run1(V) ->
 				false
 		end, N))
 	end, 0, L).
+
+run2(V) ->
+	L = persistent_term:get({?MODULE,V}),
+	run2(L, []).
+run2([], A0) ->
+	A = lists:reverse(A0),
+	{lists:sum(A),A};
+run2([{U,N}|L], A0) ->
+	S0 = lists:foldl(fun(X, D) ->
+		seg(X, U, D)
+	end, #{}, [1,4,7,8,6,0,9,2,3,5]),
+	S = maps:from_list(lists:zip(maps:values(S0),maps:keys(S0))),
+	A = [list_to_integer(lists:foldr(fun(X, D) -> [$0 + maps:get(X, S)|D] end, [], N))|A0],
+	run2(L, A).
+
+seg(D, U, S) when D == 1 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 2 end, U),
+	S#{ D => Value };
+seg(D, U, S) when D == 4 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 4 end, U),
+	S#{ D => Value };
+seg(D, U, S) when D == 7 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 3 end, U),
+	S#{ D => Value };
+seg(D, U, S) when D == 8 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 7 end, U),
+	S#{ D => Value };
+seg(D, U, S = #{ 1 := S1 }) when D == 6 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 6 andalso not ordsets:is_subset(S1, X) end, U),
+	S#{ D => Value };
+seg(D, U, S = #{ 4 := S4, 6 := S6 }) when D == 0 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 6 andalso X =/= S6 andalso not ordsets:is_subset(S4, X) end, U),
+	S#{ D => Value };
+seg(D, U, S = #{ 4 := S4 }) when D == 9 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 6 andalso ordsets:is_subset(S4, X) end, U),
+	S#{ D => Value };
+seg(D, U, S = #{ 9 := S9 }) when D == 2 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 5 andalso not ordsets:is_subset(X, S9) end, U),
+	S#{ D => Value };
+seg(D, U, S = #{ 1 := S1 }) when D == 3 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 5 andalso ordsets:is_subset(S1, X) end, U),
+	S#{ D => Value };
+seg(D, U, S = #{ 2 := S2, 3 := S3 }) when D == 5 ->
+	{value,Value} = lists:search(fun(X) -> length(X) == 5 andalso X =/= S2 andalso X =/= S3 end, U),
+	S#{ D => Value }.
