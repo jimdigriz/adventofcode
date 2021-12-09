@@ -57,5 +57,6 @@ fuel1(L, Position) ->
 
 fuel2(L, Position) ->
 	lists:foldl(fun(X, A) ->
-		A + lists:sum(lists:seq(1, abs(X - Position)))
+		O = abs(X - Position),
+		A + ((O*(O+1)) div 2)	% https://en.wikipedia.org/wiki/1_%2B_2_%2B_3_%2B_4_%2B_%E2%8B%AF
 	end, 0, L).
