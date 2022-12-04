@@ -5,7 +5,7 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
-%-export([part2/0, part2/1]).
+-export([part2/0, part2/1]).
 
 %-compile(export_all).
 
@@ -38,4 +38,23 @@ run1(V) ->
 	{S,_} = lists:partition(fun({{A1,A2},{B1,B2}}) ->
 		(A1 >= B1 andalso A2 =< B2) orelse (B1 >= A1 andalso B2 =< A2)
 	end, parse(L)),
+	length(S).
+
+%%%
+
+part2() ->
+	part2(example).
+part2(example) ->
+	4 = run2(example);
+part2(input) ->
+	run2(input).
+
+run2(V) ->
+	L0 = persistent_term:get({?MODULE,V}),
+	L = lists:map(fun({{A1,A2},{B1,B2}}) ->
+		{sets:from_list(lists:seq(A1, A2)), sets:from_list(lists:seq(B1, B2))}
+	end, parse(L0)),
+	{S,_} = lists:partition(fun({A,B}) ->
+		sets:size(sets:intersection(A, B)) > 0
+	end, L),
 	length(S).
