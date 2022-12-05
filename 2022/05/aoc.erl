@@ -5,7 +5,7 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
-%-export([part2/0, part2/1]).
+-export([part2/0, part2/1]).
 
 %-compile(export_all).
 
@@ -42,17 +42,6 @@ parse_instructions(I0) when is_binary(I0) ->
 	I = [ binary:split(II, <<" ">>, [global,trim]) || II <- binary:split(I0, <<"\n">>, [global,trim]) ],
 	[ {binary_to_integer(C),binary_to_integer(F) - 1,binary_to_integer(T) - 1} || [<<"move">>, C, <<"from">>, F, <<"to">>, T] <- I ].
 
-execute([], A) ->
-	A;
-execute([{C,F,T}|I], A0) ->
-	A = lists:foldl(fun(_CC, AA0) ->
-		[V|VF] = array:get(F, AA0),
-		AA1 = array:set(F, VF, AA0),
-		VT = array:get(T, AA1),
-		array:set(T, [V|VT], AA1)
-	end, A0, lists:seq(1, C)),
-	execute(I, A).
-
 %%%
 
 part1() ->
@@ -64,7 +53,43 @@ part1(input) ->
 
 run1(V) ->
 	{A0,I} = persistent_term:get({?MODULE,V}),
-	A = execute(I, A0),
+	A = execute1(I, A0),
 	array:foldr(fun(_II, [VV|_VR], RR) ->
 		[VV|RR]
 	end, [], A).
+
+execute1([], A) ->
+	A;
+execute1([{C,F,T}|I], A0) ->
+	A = lists:foldl(fun(_CC, AA0) ->
+		[V|VF] = array:get(F, AA0),
+		AA1 = array:set(F, VF, AA0),
+		VT = array:get(T, AA1),
+		array:set(T, [V|VT], AA1)
+	end, A0, lists:seq(1, C)),
+	execute1(I, A).
+
+%%%
+
+part2() ->
+	part2(example).
+part2(example) ->
+	"MCD" = run2(example);
+part2(input) ->
+	run2(input).
+
+run2(V) ->
+	{A0,I} = persistent_term:get({?MODULE,V}),
+	A = execute2(I, A0),
+	array:foldr(fun(_II, [VV|_VR], RR) ->
+		[VV|RR]
+	end, [], A).
+
+execute2([], A) ->
+	A;
+execute2([{C,F,T}|I], A0) ->
+	{V,VF} = lists:split(C, array:get(F, A0)),
+	A1 = array:set(F, VF, A0),
+	VT = array:get(T, A1),
+	A = array:set(T, V ++ VT, A1),
+	execute2(I, A).
