@@ -19,19 +19,16 @@ init() ->
 	end, [{example,"input.example"},{input,"input"}]).
 
 parse_drawing(D0) ->
-	[C0|L] = lists:reverse(binary:split(D0, <<"\n">>, [global,trim])),
+	[C0|L0] = lists:reverse(binary:split(D0, <<"\n">>, [global,trim])),
 	[CB|_] = lists:reverse(binary:split(C0, <<" ">>, [global,trim_all])),
 	C = binary_to_integer(CB),
 	A = array:new([{size,C},fixed,{default,[]}]),
+	L = [ <<" ", LL/binary>> || LL <- L0 ],
 	parse_drawing(L, 0, A).
-parse_drawing([<<"[",N,"]", R0/binary>>|L], C, A0) ->
-	BL = byte_size(R0),
-	R = if BL > 0 -> binary:part(R0, 1, BL - 1); true -> R0 end,
+parse_drawing([<<" [",N,"]", R/binary>>|L], C, A0) ->
 	A = array:set(C, [N|array:get(C, A0)], A0),
 	parse_drawing([R|L], C + 1, A);
-parse_drawing([<<"   ", R0/binary>>|L], C, A) ->
-	BL = byte_size(R0),
-	R = if BL > 0 -> binary:part(R0, 1, BL - 1); true -> R0 end,
+parse_drawing([<<"    ", R/binary>>|L], C, A) ->
 	parse_drawing([R|L], C + 1, A);
 parse_drawing([<<>>|L], _C, A) ->
 	parse_drawing(L, 0, A);
