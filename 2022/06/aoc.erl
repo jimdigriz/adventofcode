@@ -49,8 +49,7 @@ run2(V) ->
 
 marker_message(H, T = [HH|TT]) ->
 	{HHH,_} = lists:split(14, T),
-	S = sets:from_list(HHH),
-	case sets:size(S) of
+	case length(lists:uniq(HHH)) of
 		14 ->
 			length(H) + 14;
 		_ ->
