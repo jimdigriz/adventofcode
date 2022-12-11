@@ -95,9 +95,7 @@ part2(input) ->
 
 run2(V) ->
 	ML = persistent_term:get({?MODULE,V}),
-	N = lists:foldl(fun(#monkey{ test = {TD,_,_} }, A) ->
-		A * TD
-	end, 1, ML),
+	N = lists:foldl(fun(#monkey{ test = {TD,_,_} }, A) -> A * TD end, 1, ML),
 	run2(ML, N, 10000).
 
 run2(ML, _N, 0) ->
