@@ -5,7 +5,7 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
-%-export([part2/0, part2/1]).
+-export([part2/0, part2/1]).
 
 %-compile(export_all).
 
@@ -15,7 +15,7 @@
 	id		:: non_neg_integer(),
 	items		:: list(non_neg_integer()),
 	oper		:: merl:tree(),
-	test		:: merl:tree(),
+	test		:: {pos_integer(),non_neg_integer(),non_neg_integer()},
 
 	count	= 0	:: non_neg_integer()
 }).
@@ -42,24 +42,21 @@ parse([<<"  Starting items: ", IB/binary>>|L], [M|MR]) ->
 	parse(L, [M#monkey{ items = I }|MR]);
 parse([<<"  Operation: new = ", O0/binary>>|L], [M|MR]) ->
 	O = binary_to_list(binary:replace(O0, <<"old">>, <<"_@old">>, [global])),
-%io:format("~p~n",[O]),
 	parse(L, [M#monkey{ oper = O }|MR]);
 parse([<<"  Test: divisible by ", TDB/binary>>,TT,TF|L], [M|MR]) ->
-	TD = binary_to_list(TDB),
+	TD = binary_to_integer(TDB),
 	<<"    If true: throw to monkey ", TMNB/binary>> = TT,
 	<<"    If false: throw to monkey ", FMNB/binary>> = TF,
-	TMN = binary_to_list(TMNB),
-	FMN = binary_to_list(FMNB),
-	T = "if _@worry rem " ++ TD ++ " == 0 -> " ++ TMN ++ "; true -> " ++ FMN ++ " end",
-%io:format("~p~n",[T]),
-	parse(L, [M#monkey{ test = T }|MR]).
+	TMN = binary_to_integer(TMNB),
+	FMN = binary_to_integer(FMNB),
+	parse(L, [M#monkey{ test = {TD,TMN,FMN} }|MR]).
 
 %%%
 
 part1() ->
 	part1(example).
 part1(example) ->
-	[X = 105, Y = 101|_] = run1(example),
+	[X = 105, Y = 101,95,7] = run1(example),
 	X * Y;
 part1(input) ->
 	[X,Y|_] = run1(input),
@@ -73,14 +70,47 @@ run1(ML, 0) ->
 	lists:reverse(lists:sort([ C || #monkey{ count = C } <- ML ]));
 run1(ML0, C) ->
 	ML = lists:foldl(fun(X, ML1) ->
-		M = lists:keyfind(X, #monkey.id, ML1),
+		M = #monkey{ oper = O, test = {TD,TMN,FMN} } = lists:keyfind(X, #monkey.id, ML1),
 		ML3 = lists:foldl(fun(I, ML2) ->
-			{value,W0,[]} = erl_eval:expr(erl_syntax:revert(?Q(M#monkey.oper, [{old,merl:term(I)}])), []),
+			{value,W0,[]} = erl_eval:expr(erl_syntax:revert(?Q(O, [{old,merl:term(I)}])), []),
 			W = W0 div 3,
-			{value,O,[]} = erl_eval:expr(erl_syntax:revert(?Q(M#monkey.test, [{worry,merl:term(W)}])), []),
-			MO = #monkey{ items = MI } = lists:keyfind(O, #monkey.id, ML2),
-			lists:keyreplace(O, #monkey.id, ML2, MO#monkey{ items = MI ++ [W] })
+			MTN = if W rem TD == 0 -> TMN; true -> FMN end,
+			MT = #monkey{ items = MTI } = lists:keyfind(MTN, #monkey.id, ML2),
+			lists:keyreplace(MTN, #monkey.id, ML2, MT#monkey{ items = MTI ++ [W] })
 		end, ML1, M#monkey.items),
 		lists:keyreplace(X, #monkey.id, ML3, M#monkey{ items = [], count = M#monkey.count + length(M#monkey.items) })
 	end, ML0, lists:seq(0, length(ML0) - 1)),
 	run1(ML, C - 1).
+
+%%%
+
+part2() ->
+	part2(example).
+part2(example) ->
+	[X = 52166, Y = 52013,47830,1938] = run2(example),
+	X * Y;
+part2(input) ->
+	[X,Y|_] = run2(input),
+	X * Y.
+
+run2(V) ->
+	ML = persistent_term:get({?MODULE,V}),
+	N = lists:foldl(fun(#monkey{ test = {TD,_,_} }, A) ->
+		A * TD
+	end, 1, ML),
+	run2(ML, N, 10000).
+
+run2(ML, _N, 0) ->
+	lists:reverse(lists:sort([ C || #monkey{ count = C } <- ML ]));
+run2(ML0, N, C) ->
+	ML = lists:foldl(fun(X, ML1) ->
+		M = #monkey{ oper = O, test = {TD,TMN,FMN} } = lists:keyfind(X, #monkey.id, ML1),
+		ML3 = lists:foldl(fun(I, ML2) ->
+			{value,W,[]} = erl_eval:expr(erl_syntax:revert(?Q(O, [{old,merl:term(I)}])), []),
+			MTN = if W rem TD == 0 -> TMN; true -> FMN end,
+			MT = #monkey{ items = MTI } = lists:keyfind(MTN, #monkey.id, ML2),
+			lists:keyreplace(MTN, #monkey.id, ML2, MT#monkey{ items = MTI ++ [W rem N] })
+		end, ML1, M#monkey.items),
+		lists:keyreplace(X, #monkey.id, ML3, M#monkey{ items = [], count = M#monkey.count + length(M#monkey.items) })
+	end, ML0, lists:seq(0, length(ML0) - 1)),
+	run2(ML, N, C - 1).
