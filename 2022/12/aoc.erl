@@ -5,9 +5,11 @@
 -on_load(init/0).
 
 -export([part1/0, part1/1]).
-%-export([part2/0, part2/1]).
+-export([part2/0, part2/1]).
 
--compile(export_all).
+-export([peek/2]).
+
+%-compile(export_all).
 
 init() ->
 	lists:foreach(fun({K,F}) ->
@@ -36,6 +38,16 @@ parse(L) ->
 coord_get({Y,X}, A) -> array:get(X, array:get(Y, A)).
 coord_set({Y,X}, V, A) -> array:set(Y, array:set(X, V, array:get(Y, A)), A).
 
+peek({Y,X}, M) when is_atom(M) ->
+	peek({Y,X}, element(3, persistent_term:get({aoc,M})));
+peek({Y,X}, M) ->
+	lists:foreach(fun(YY) ->
+		lists:foreach(fun(XX) ->
+			io:format("~s",[[coord_get({YY,XX},M)]])
+		end, lists:seq(max(0, X - 5), X + 5)),
+		io:format("~n",[])
+	end, lists:seq(max(0, Y - 5), Y + 5)).
+
 %%%
 
 part1() ->
@@ -48,6 +60,34 @@ part1(input) ->
 run1(V) ->
 	{S,E,M} = persistent_term:get({?MODULE,V}),
 	astar(S, E, M).
+
+%%%
+
+part2() ->
+	part2(example).
+part2(example) ->
+	29 = lists:min(run2(example));
+part2(input) ->
+	lists:min(run2(input)).
+
+run2(V) ->
+	{_S0,E,M} = persistent_term:get({?MODULE,V}),
+	S = array:foldl(fun(YY, AX, A) ->
+		array:foldl(fun
+			(XX, VV, AA) when VV == $a ->
+				[{YY,XX}|AA];
+			(_XX, _VV, AA) ->
+				AA
+		end, A, AX)
+	end, [], M),
+	lists:filtermap(fun
+		(false) ->
+			false;
+		(P) ->
+			{true,length(P) - 1}
+	end, [ astar(SS, E, M) || SS <- S ]).
+
+%%%
 
 % https://en.wikipedia.org/wiki/A*_search_algorithm
 astar(S, E, M) ->
@@ -94,7 +134,7 @@ astar(Map, Goal, OpenSet0, CameFrom0, GScore0, FScore0, Current = {{Y,X},H}, [_N
 	astar(Map, Goal, OpenSet, CameFrom, GScore, FScore, Current, NR);
 astar(Map, Goal, OpenSet, CameFrom, GScore, FScore, Current, [_N|NR]) ->
 	astar(Map, Goal, OpenSet, CameFrom, GScore, FScore, Current, NR).
-	
+
 astar_h(_N = {NY,NX}, _E = {EY,EX}, _M) ->
 	abs(EY - NY) + abs(EX - NX).
 
@@ -105,13 +145,3 @@ astar_path(Path = [C|_], CameFrom) ->
 		N ->
 			astar_path([N|Path], CameFrom)
 	end.
-
-peek({Y,X}, M) when is_atom(M) ->
-	peek({Y,X}, element(3, persistent_term:get({aoc,M})));
-peek({Y,X}, M) ->
-	lists:foreach(fun(YY) ->
-		lists:foreach(fun(XX) ->
-			io:format("~s",[[coord_get({YY,XX},M)]])
-		end, lists:seq(max(0, X - 5), X + 5)),
-		io:format("~n",[])
-	end, lists:seq(max(0, Y - 5), Y + 5)).
