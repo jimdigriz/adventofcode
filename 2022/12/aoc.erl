@@ -135,6 +135,7 @@ astar(Map, Goal, OpenSet0, CameFrom0, GScore0, FScore0, Current = {{Y,X},H}, [_N
 astar(Map, Goal, OpenSet, CameFrom, GScore, FScore, Current, [_N|NR]) ->
 	astar(Map, Goal, OpenSet, CameFrom, GScore, FScore, Current, NR).
 
+% Manhattan distance is fine for our case
 astar_h(_N = {NY,NX}, _E = {EY,EX}, _M) ->
 	abs(EY - NY) + abs(EX - NX).
 
