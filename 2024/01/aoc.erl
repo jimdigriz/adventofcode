@@ -42,6 +42,28 @@ run1(V) ->
 	B = lists:sort(B0),
 	lists:map(fun({AA, BB}) ->
 		abs(AA - BB)
-	end,  lists:zip(A, B)).
+	end, lists:zip(A, B)).
 
 %%%
+
+part2() ->
+	part2(example).
+part2(example) ->
+	L = [9,4,0,0,9,9] = run2(example),
+	lists:sum(L);
+part2(input) ->
+	lists:sum(run2(input)).
+
+run2(V) ->
+	{A,B0} = persistent_term:get({?MODULE,V}),
+	B = lists:foldl(fun(BB, D) ->
+		dict:update_counter(BB, 1, D)
+	end, dict:new(), B0),
+	lists:map(fun(AA) ->
+		case dict:find(AA, B) of
+			{ok, VV} ->
+				AA * VV;
+			error ->
+				0
+		end
+	end, A).
